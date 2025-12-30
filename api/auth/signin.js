@@ -15,22 +15,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, name } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "Missing email or password" });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
+    const { email, password } = req.body;
 
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, name)
-       VALUES ($1,$2,$3)
-       RETURNING id, email, name`,
-      [email.toLowerCase(), hashed, name || null]
+      "SELECT * FROM users WHERE email=$1",
+      [email.toLowerCase()]
     );
 
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
     const user = result.rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
 
     const token = jwt.sign(
       { userId: user.id },
@@ -38,12 +39,12 @@ export default async function handler(req, res) {
       { expiresIn: "7d" }
     );
 
-    res.status(200).json({ token, user });
+    res.status(200).json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name }
+    });
 
   } catch (err) {
-    if (err.code === "23505") {
-      return res.status(409).json({ error: "Email already exists" });
-    }
     res.status(500).json({ error: err.message });
   }
 }

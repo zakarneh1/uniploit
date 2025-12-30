@@ -3,43 +3,132 @@ import { mockCourses, mockSessions } from "@/data/mockData";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** =========================
+ *  Token helpers
+ *  ========================= */
 const TOKEN_KEY = "unipilot-token";
-const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
-const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
+const getToken = () => {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const setToken = (t: string) => {
+  try {
+    localStorage.setItem(TOKEN_KEY, t);
+  } catch {}
+};
+
+const clearToken = () => {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+};
+
+/** =========================
+ *  HTTP helpers
+ *  ========================= */
+// IMPORTANT: keep this EMPTY so requests go to the same domain (Vercel) reliably.
+const API_BASE = "";
+
+type JsonValue = any;
+
+async function requestJSON<T = JsonValue>(
+  path: string,
+  options: RequestInit & { json?: any; auth?: boolean } = {}
+): Promise<T> {
+  const { json, auth = false, headers, ...rest } = options;
+
+  const h: Record<string, string> = {
+    ...(headers as Record<string, string>),
+  };
+
+  if (json !== undefined) {
+    h["Content-Type"] = "application/json";
+  }
+
+  if (auth) {
+    const token = getToken();
+    if (token) h["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...rest,
+    headers: h,
+    body: json !== undefined ? JSON.stringify(json) : rest.body,
+  });
+
+  // Try parse JSON; if server returns plain text, keep it.
+  const text = await res.text();
+  let data: any = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { error: text };
+  }
+
+  if (!res.ok) {
+    // Backend might send {error:"..."} or {message:"..."}
+    const msg =
+      data?.error ||
+      data?.message ||
+      `Request failed (${res.status} ${res.statusText})`;
+    throw new Error(msg);
+  }
+
+  return data as T;
+}
+
+/** =========================
+ *  API
+ *  ========================= */
 export const api = {
   auth: {
     login: async (email: string, password: string): Promise<User> => {
-      const r = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await requestJSON<{ token: string; user: User }>(
+        "/api/auth/login",
+        {
+          method: "POST",
+          json: { email, password },
+        }
+      );
 
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data?.error || "Login failed");
-
-      setToken(data.token);
-      return data.user as User;
+      if (data?.token) setToken(data.token);
+      return data.user;
     },
 
-    signup: async (email: string, password: string, name: string): Promise<User> => {
-      const r = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
+    signup: async (
+      email: string,
+      password: string,
+      name: string
+    ): Promise<User> => {
+      const data = await requestJSON<{ token: string; user: User }>(
+        "/api/auth/signup",
+        {
+          method: "POST",
+          json: { email, password, name },
+        }
+      );
 
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data?.error || "Signup failed");
-
-      setToken(data.token);
-      return data.user as User;
+      if (data?.token) setToken(data.token);
+      return data.user;
     },
 
     logout: async (): Promise<void> => {
       clearToken();
-      await delay(200);
+      await delay(150);
+    },
+
+    // Optional: for later if you add /api/auth/me
+    me: async (): Promise<User> => {
+      const data = await requestJSON<{ user: User }>("/api/auth/me", {
+        method: "GET",
+        auth: true,
+      });
+      return data.user;
     },
   },
 
@@ -94,7 +183,10 @@ export const api = {
       await delay(200);
       return { ...session, id: Date.now().toString() };
     },
-    update: async (id: string, updates: Partial<StudySession>): Promise<StudySession> => {
+    update: async (
+      id: string,
+      updates: Partial<StudySession>
+    ): Promise<StudySession> => {
       await delay(200);
       const session = mockSessions.find((s) => s.id === id);
       if (!session) throw new Error("Session not found");
