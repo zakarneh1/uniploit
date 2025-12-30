@@ -26,54 +26,40 @@ const findUserByEmail = (email: string): User | null => {
   return users[email] || null;
 };
 
+const TOKEN_KEY = "unipilot-token";
+const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
+const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
 export const api = {
   auth: {
-    login: async (email: string, password: string): Promise<User> => {
-      await delay(800);
-      
-      const user = findUserByEmail(email);
-      if (!user) {
-        throw new Error('Invalid credentials - user not found');
-      }
-      
-      // In a real app, you'd verify the password hash
-      // For this demo, we'll just return the user
-      return user;
+    login: async (email: string, password: string) => {
+      const r = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || "Login failed");
+      setToken(data.token);
+      return data.user;
     },
-    
-    signup: async (email: string, password: string, name: string): Promise<User> => {
-      await delay(1000);
-      
-      // Check if user already exists
-      const existingUser = findUserByEmail(email);
-      if (existingUser) {
-        throw new Error('An account with this email already exists');
-      }
-      
-      // Create new user with unique ID
-      const newUser: User = {
-        id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        email,
-        name,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
-        university: '',
-        major: '',
-        graduationYear: new Date().getFullYear() + 4,
-        gpa: 0,
-        targetGpa: 3.5,
-      };
-      
-      // Save user to localStorage
-      saveUser(newUser);
-      
-      return newUser;
+    signup: async (email: string, password: string, name: string) => {
+      const r = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || "Signup failed");
+      setToken(data.token);
+      return data.user;
     },
-    
-    logout: async (): Promise<void> => {
-      await delay(300);
+    logout: async () => {
+      clearToken();
     },
   },
-
+  // keep the rest for now
+};
   courses: {
     getAll: async (): Promise<Course[]> => {
       await delay(500);
