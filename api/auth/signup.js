@@ -1,6 +1,7 @@
 import pg from "pg";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { parse } from "pg-connection-string";
 
 const { Pool } = pg;
 
@@ -15,6 +16,9 @@ function getPool() {
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.NEON_DATABASE_URL;
+    const parsed = parse(connectionString);
+console.log("DB HOST USED BY FUNCTION:", parsed.host);
+
 
   if (!connectionString) {
     const keys = Object.keys(process.env).filter((k) =>
