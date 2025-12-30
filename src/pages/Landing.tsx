@@ -59,7 +59,6 @@ export default function Landing() {
       <nav className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/3313a32e-9eab-4f4d-8f7b-caf64e3e3698.png" alt="UniPilot Logo" className="h-10 w-10" />
             <span className="text-xl font-bold">UniPilot</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -301,7 +300,6 @@ export default function Landing() {
         <div className="container">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex items-center gap-2">
-              <img src="https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/3313a32e-9eab-4f4d-8f7b-caf64e3e3698.png" alt="UniPilot Logo" className="h-8 w-8" />
               <span className="text-lg font-bold">UniPilot</span>
             </div>
             <p className="text-sm bg-[#00000000] mt-[0px] mr-[0px] mb-[0px] ml-[0px] pt-[0px] pr-[0px] pb-[0px] pl-[0px] font-normal opacity-100 text-[#64748B]">
