@@ -25,20 +25,69 @@ export function initializeGoogleAuth(onSuccess: (response: GoogleAuthResponse) =
     return;
   }
 
+  console.log('Initializing Google Auth with client ID:', GOOGLE_CLIENT_ID);
+
+  // Check if Google Identity Services is already loaded
+  if (window.google && window.google.accounts) {
+    console.log('Google Identity Services already loaded, initializing directly');
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: onSuccess,
+    });
+    return;
+  }
+
   // Load Google Identity Services script
   const script = document.createElement('script');
   script.src = 'https://accounts.google.com/gsi/client';
   script.async = true;
   script.defer = true;
   script.onload = () => {
-    if (window.google) {
+    console.log('Google Identity Services script loaded successfully');
+    if (window.google && window.google.accounts) {
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: onSuccess,
       });
+      console.log('Google Auth initialized successfully');
+    } else {
+      console.error('Google Identity Services loaded but window.google.accounts is not available');
     }
   };
+  script.onerror = () => {
+    console.error('Failed to load Google Identity Services script');
+  };
   document.head.appendChild(script);
+}
+
+/**
+ * Render Google Sign-In button
+ */
+export function renderGoogleButton(elementId: string, onSuccess: (response: GoogleAuthResponse) => void) {
+  if (!GOOGLE_CLIENT_ID) {
+    console.warn('Google Client ID not configured');
+    return;
+  }
+
+  const checkGoogleAndRender = () => {
+    if (window.google && window.google.accounts) {
+      console.log('Rendering Google sign-in button');
+      window.google.accounts.id.renderButton(
+        document.getElementById(elementId),
+        {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: 'continue_with'
+        }
+      );
+    } else {
+      console.log('Google not ready, retrying...');
+      setTimeout(checkGoogleAndRender, 100);
+    }
+  };
+
+  checkGoogleAndRender();
 }
 
 /**
@@ -49,9 +98,13 @@ export function signInWithGoogle() {
     throw new Error('Google authentication is not configured. Please contact support.');
   }
 
-  if (window.google) {
+  console.log('Attempting to trigger Google sign-in');
+
+  if (window.google && window.google.accounts) {
+    console.log('Calling window.google.accounts.id.prompt()');
     window.google.accounts.id.prompt();
   } else {
+    console.error('Google Identity Services not available');
     throw new Error('Google Sign-In not initialized');
   }
 }

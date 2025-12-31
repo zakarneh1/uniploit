@@ -100,6 +100,25 @@ export const api = {
       return data.user;
     },
 
+    loginWithGoogle: async (email: string, oauthId: string, name: string, avatarUrl?: string): Promise<User> => {
+      const data = await requestJSON<{ token: string; user: User }>(
+        "/api/auth/login",
+        {
+          method: "POST",
+          json: {
+            email,
+            oauthProvider: 'google',
+            oauthId,
+            name,
+            avatarUrl
+          },
+        }
+      );
+
+      if (data?.token) setToken(data.token);
+      return data.user;
+    },
+
     signup: async (
       email: string,
       password: string,
@@ -110,6 +129,25 @@ export const api = {
         {
           method: "POST",
           json: { email, password, name },
+        }
+      );
+
+      if (data?.token) setToken(data.token);
+      return data.user;
+    },
+
+    signupWithGoogle: async (email: string, oauthId: string, name: string, avatarUrl?: string): Promise<User> => {
+      const data = await requestJSON<{ token: string; user: User }>(
+        "/api/auth/signup",
+        {
+          method: "POST",
+          json: {
+            email,
+            oauthProvider: 'google',
+            oauthId,
+            name,
+            avatarUrl
+          },
         }
       );
 

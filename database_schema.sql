@@ -9,6 +9,11 @@
 --   name VARCHAR(255)
 -- );
 
+-- Add OAuth support to users table
+ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_id VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500);
+
 -- Add additional user fields
 ALTER TABLE users ADD COLUMN IF NOT EXISTS gpa_scale DECIMAL(2,1) DEFAULT 4.0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS semester_start VARCHAR(50);
