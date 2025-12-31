@@ -103,7 +103,6 @@ export default function Login() {
           transition={{ duration: 0.6 }}
         >
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <img src="/logo.png" alt="UniPilot Logo" className="h-8 w-8" />
             <span className="text-2xl font-bold">UniPilot</span>
           </Link>
           <h1 className="text-4xl font-bold mb-4">Welcome back!</h1>
