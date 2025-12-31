@@ -32,7 +32,7 @@ const clearToken = () => {
  *  HTTP helpers
  *  ========================= */
 // For local development, point to deployed backend. For production, keep empty.
-const API_BASE = import.meta.env.DEV ? "https://uniploit.ahmadsalama.com" : "";
+const API_BASE = "https://uniploit.ahmadsalama.com";
 
 type JsonValue = any;
 
@@ -55,7 +55,9 @@ async function requestJSON<T = JsonValue>(
     if (token) h["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const fullUrl = `${API_BASE}${path}`;
+  console.log('API Request:', { path, API_BASE, fullUrl });
+  const res = await fetch(fullUrl, {
     ...rest,
     headers: h,
     body: json !== undefined ? JSON.stringify(json) : rest.body,
