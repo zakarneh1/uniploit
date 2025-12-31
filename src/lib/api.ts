@@ -55,9 +55,7 @@ async function requestJSON<T = JsonValue>(
     if (token) h["Authorization"] = `Bearer ${token}`;
   }
 
-  const fullUrl = `${API_BASE}${path}`;
-  console.log('API Request:', { path, API_BASE, fullUrl });
-  const res = await fetch(fullUrl, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...rest,
     headers: h,
     body: json !== undefined ? JSON.stringify(json) : rest.body,
@@ -137,71 +135,174 @@ export const api = {
   // keep the rest as placeholders for now (so app doesn't break)
   courses: {
     getAll: async (): Promise<Course[]> => {
-      await delay(200);
-      return mockCourses;
+      const data = await requestJSON<Course[]>("/api/courses", {
+        method: "GET",
+        auth: true,
+      });
+      return data;
     },
     getById: async (id: string): Promise<Course | undefined> => {
-      await delay(200);
-      return mockCourses.find((c) => c.id === id);
+      const data = await requestJSON<Course>(`/api/courses/${id}`, {
+        method: "GET",
+        auth: true,
+      });
+      return data;
     },
     create: async (course: Omit<Course, "id">): Promise<Course> => {
-      await delay(200);
-      return { ...course, id: Date.now().toString() };
+      const data = await requestJSON<Course>("/api/courses", {
+        method: "POST",
+        json: course,
+        auth: true,
+      });
+      return data;
     },
     update: async (id: string, updates: Partial<Course>): Promise<Course> => {
-      await delay(200);
-      const course = mockCourses.find((c) => c.id === id);
-      if (!course) throw new Error("Course not found");
-      return { ...course, ...updates };
+      const data = await requestJSON<Course>(`/api/courses/${id}`, {
+        method: "PUT",
+        json: updates,
+        auth: true,
+      });
+      return data;
     },
-    delete: async (_id: string): Promise<void> => {
-      await delay(200);
+    delete: async (id: string): Promise<void> => {
+      await requestJSON(`/api/courses/${id}`, {
+        method: "DELETE",
+        auth: true,
+      });
+    },
+  },
+
+  semesters: {
+    getAll: async (): Promise<Semester[]> => {
+      const data = await requestJSON<Semester[]>("/api/semesters", {
+        method: "GET",
+        auth: true,
+      });
+      return data;
+    },
+    create: async (semester: Omit<Semester, "id">): Promise<Semester> => {
+      const data = await requestJSON<Semester>("/api/semesters", {
+        method: "POST",
+        json: semester,
+        auth: true,
+      });
+      return data;
+    },
+    update: async (id: string, updates: Partial<Semester>): Promise<Semester> => {
+      const data = await requestJSON<Semester>(`/api/semesters/${id}`, {
+        method: "PUT",
+        json: updates,
+        auth: true,
+      });
+      return data;
+    },
+    delete: async (id: string): Promise<void> => {
+      await requestJSON(`/api/semesters/${id}`, {
+        method: "DELETE",
+        auth: true,
+      });
     },
   },
 
   grades: {
     create: async (grade: Omit<Grade, "id">): Promise<Grade> => {
-      await delay(200);
-      return { ...grade, id: Date.now().toString() };
+      const data = await requestJSON<Grade>("/api/grades", {
+        method: "POST",
+        json: grade,
+        auth: true,
+      });
+      return data;
     },
     update: async (id: string, updates: Partial<Grade>): Promise<Grade> => {
-      await delay(200);
-      const course = mockCourses.find((c) => c.grades.some((g) => g.id === id));
-      const grade = course?.grades.find((g) => g.id === id);
-      if (!grade) throw new Error("Grade not found");
-      return { ...grade, ...updates };
+      const data = await requestJSON<Grade>(`/api/grades/${id}`, {
+        method: "PUT",
+        json: updates,
+        auth: true,
+      });
+      return data;
     },
-    delete: async (_id: string): Promise<void> => {
-      await delay(200);
+    delete: async (id: string): Promise<void> => {
+      await requestJSON(`/api/grades/${id}`, {
+        method: "DELETE",
+        auth: true,
+      });
     },
   },
 
   sessions: {
     getAll: async (): Promise<StudySession[]> => {
-      await delay(200);
-      return mockSessions;
+      const data = await requestJSON<StudySession[]>("/api/sessions", {
+        method: "GET",
+        auth: true,
+      });
+      return data;
     },
     create: async (session: Omit<StudySession, "id">): Promise<StudySession> => {
-      await delay(200);
-      return { ...session, id: Date.now().toString() };
+      const data = await requestJSON<StudySession>("/api/sessions", {
+        method: "POST",
+        json: session,
+        auth: true,
+      });
+      return data;
     },
     update: async (
       id: string,
       updates: Partial<StudySession>
     ): Promise<StudySession> => {
-      await delay(200);
-      const session = mockSessions.find((s) => s.id === id);
-      if (!session) throw new Error("Session not found");
-      return { ...session, ...updates };
+      const data = await requestJSON<StudySession>(`/api/sessions/${id}`, {
+        method: "PUT",
+        json: updates,
+        auth: true,
+      });
+      return data;
     },
-    delete: async (_id: string): Promise<void> => {
-      await delay(200);
+    delete: async (id: string): Promise<void> => {
+      await requestJSON(`/api/sessions/${id}`, {
+        method: "DELETE",
+        auth: true,
+      });
     },
     toggleComplete: async (id: string): Promise<StudySession> => {
-      await delay(200);
-      const session = mockSessions.find((s) => s.id === id);
-      if (!session) throw new Error("Session not found");
-      return { ...session, completed: !session.completed };
+      // First get the current session
+      const session = await requestJSON<StudySession>(`/api/sessions/${id}`, {
+        method: "GET",
+        auth: true,
+      });
+      // Then update it
+      const data = await requestJSON<StudySession>(`/api/sessions/${id}`, {
+        method: "PUT",
+        json: { completed: !session.completed },
+        auth: true,
+      });
+      return data;
+    },
+  },
+
+  user: {
+    getProfile: async (): Promise<User> => {
+      const data = await requestJSON<User>("/api/user", {
+        method: "GET",
+        auth: true,
+      });
+      return data;
+    },
+    updateProfile: async (updates: Partial<User>): Promise<User> => {
+      const data = await requestJSON<User>("/api/user", {
+        method: "PUT",
+        json: updates,
+        auth: true,
+      });
+      return data;
+    },
+  },
+
+  workspace: {
+    getAll: async (): Promise<{ user: User; semesters: Semester[]; courses: Course[]; sessions: StudySession[] }> => {
+      const data = await requestJSON<{ user: User; semesters: Semester[]; courses: Course[]; sessions: StudySession[] }>("/api/workspace", {
+        method: "GET",
+        auth: true,
+      });
+      return data;
     },
   },
 };

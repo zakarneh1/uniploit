@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Course, StudySession, User, UserWorkspace, Semester, Grade } from '@/types';
 import { letterToPercent, getGradeScale } from '@/lib/gradeScale';
+import { api } from '@/lib/api';
 
 interface WorkspaceState extends UserWorkspace {
   // User methods
@@ -33,9 +34,11 @@ interface WorkspaceState extends UserWorkspace {
 
   // Workspace methods
   getCurrentWorkspace: () => UserWorkspace;
-  loadWorkspace: (userId: string) => void;
-  saveWorkspace: () => void;
+  loadWorkspace: (userId: string) => Promise<void>;
+  saveWorkspace: () => Promise<void>;
   resetWorkspace: () => void;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const STORAGE_KEY_PREFIX = 'unipilot-workspace-';
@@ -66,15 +69,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   semesters: [],
   courses: [],
   sessions: [],
+  isLoading: false,
+  error: null,
 
   // User methods
   getUser: () => get().user,
 
-  updateUser: (updates) => {
-    set((state) => ({
-      user: { ...state.user, ...updates },
-    }));
-    get().saveWorkspace();
+  updateUser: async (updates) => {
+    try {
+      const updatedUser = await api.user.updateProfile(updates);
+      set({ user: updatedUser });
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      set({ error: 'Failed to update user profile' });
+    }
   },
 
   // Semester methods
@@ -84,37 +92,71 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     return get().semesters.find((s) => s.isCurrent) || null;
   },
 
-  addSemester: (semester) => {
-    set((state) => ({
-      semesters: [...state.semesters, semester],
-    }));
-    get().saveWorkspace();
+  addSemester: async (semester) => {
+    try {
+      set({ isLoading: true, error: null });
+      const newSemester = await api.semesters.create(semester);
+      set((state) => ({
+        semesters: [...state.semesters, newSemester],
+      }));
+    } catch (error) {
+      console.error('Failed to add semester:', error);
+      set({ error: 'Failed to add semester' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  updateSemester: (id, updates) => {
-    set((state) => ({
-      semesters: state.semesters.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }));
-    get().saveWorkspace();
+  updateSemester: async (id, updates) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedSemester = await api.semesters.update(id, updates);
+      set((state) => ({
+        semesters: state.semesters.map((s) => (s.id === id ? updatedSemester : s)),
+      }));
+    } catch (error) {
+      console.error('Failed to update semester:', error);
+      set({ error: 'Failed to update semester' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  deleteSemester: (id) => {
-    // Also delete all courses in this semester
-    set((state) => ({
-      semesters: state.semesters.filter((s) => s.id !== id),
-      courses: state.courses.filter((c) => c.semesterId !== id),
-    }));
-    get().saveWorkspace();
+  deleteSemester: async (id) => {
+    try {
+      set({ isLoading: true, error: null });
+      await api.semesters.delete(id);
+      set((state) => ({
+        semesters: state.semesters.filter((s) => s.id !== id),
+        courses: state.courses.filter((c) => c.semesterId !== id),
+      }));
+    } catch (error) {
+      console.error('Failed to delete semester:', error);
+      set({ error: 'Failed to delete semester' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  setCurrentSemester: (id) => {
-    set((state) => ({
-      semesters: state.semesters.map((s) => ({
+  setCurrentSemester: async (id) => {
+    try {
+      set({ isLoading: true, error: null });
+      // Update all semesters to set the current one
+      const updatedSemesters = get().semesters.map((s) => ({
         ...s,
         isCurrent: s.id === id,
-      })),
-    }));
-    get().saveWorkspace();
+      }));
+
+      // Update the current semester in the database
+      await api.semesters.update(id, { isCurrent: true });
+
+      set({ semesters: updatedSemesters });
+    } catch (error) {
+      console.error('Failed to set current semester:', error);
+      set({ error: 'Failed to set current semester' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   // Course methods
@@ -124,53 +166,50 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     return get().courses.filter((c) => c.semesterId === semesterId);
   },
 
-  addCourse: (course) => {
-    set((state) => ({
-      courses: [...state.courses, course],
-    }));
-    get().saveWorkspace();
+  addCourse: async (course) => {
+    try {
+      set({ isLoading: true, error: null });
+      const newCourse = await api.courses.create(course);
+      set((state) => ({
+        courses: [...state.courses, newCourse],
+      }));
+    } catch (error) {
+      console.error('Failed to add course:', error);
+      set({ error: 'Failed to add course' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  updateCourse: (id, updates) => {
-    set((state) => ({
-      courses: state.courses.map((c) => {
-        if (c.id !== id) return c;
-        
-        const updated = { ...c, ...updates };
-        
-        // If grades were updated, recompute grade percents
-        if (updates.grades) {
-          const user = get().user;
-          const gradeScale = getGradeScale(user?.gpaScale || 4.0);
-          
-          updated.grades = updates.grades.map((grade: Grade) => {
-            if (grade.entryType === 'letter' && grade.letterGrade) {
-              return {
-                ...grade,
-                percent: letterToPercent(grade.letterGrade, gradeScale),
-              };
-            } else if (grade.entryType === 'numeric' && grade.score !== undefined && grade.maxScore) {
-              return {
-                ...grade,
-                percent: (grade.score / grade.maxScore) * 100,
-              };
-            }
-            return grade;
-          });
-        }
-        
-        return updated;
-      }),
-    }));
-    get().saveWorkspace();
+  updateCourse: async (id, updates) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedCourse = await api.courses.update(id, updates);
+      set((state) => ({
+        courses: state.courses.map((c) => (c.id === id ? updatedCourse : c)),
+      }));
+    } catch (error) {
+      console.error('Failed to update course:', error);
+      set({ error: 'Failed to update course' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  deleteCourse: (id) => {
-    set((state) => ({
-      courses: state.courses.filter((c) => c.id !== id),
-      sessions: state.sessions.filter((s) => s.courseId !== id),
-    }));
-    get().saveWorkspace();
+  deleteCourse: async (id) => {
+    try {
+      set({ isLoading: true, error: null });
+      await api.courses.delete(id);
+      set((state) => ({
+        courses: state.courses.filter((c) => c.id !== id),
+        sessions: state.sessions.filter((s) => s.courseId !== id),
+      }));
+    } catch (error) {
+      console.error('Failed to delete course:', error);
+      set({ error: 'Failed to delete course' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   archiveCourse: (id) => {
@@ -194,18 +233,34 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   // Session methods
   getSessions: () => get().sessions,
 
-  addSession: (session) => {
-    set((state) => ({
-      sessions: [...state.sessions, session],
-    }));
-    get().saveWorkspace();
+  addSession: async (session) => {
+    try {
+      set({ isLoading: true, error: null });
+      const newSession = await api.sessions.create(session);
+      set((state) => ({
+        sessions: [...state.sessions, newSession],
+      }));
+    } catch (error) {
+      console.error('Failed to add session:', error);
+      set({ error: 'Failed to add study session' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  updateSession: (id, updates) => {
-    set((state) => ({
-      sessions: state.sessions.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }));
-    get().saveWorkspace();
+  updateSession: async (id, updates) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedSession = await api.sessions.update(id, updates);
+      set((state) => ({
+        sessions: state.sessions.map((s) => (s.id === id ? updatedSession : s)),
+      }));
+    } catch (error) {
+      console.error('Failed to update session:', error);
+      set({ error: 'Failed to update study session' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   deleteSession: (id) => {
@@ -215,13 +270,19 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     get().saveWorkspace();
   },
 
-  toggleSessionComplete: (id) => {
-    set((state) => ({
-      sessions: state.sessions.map((s) =>
-        s.id === id ? { ...s, completed: !s.completed } : s
-      ),
-    }));
-    get().saveWorkspace();
+  toggleSessionComplete: async (id) => {
+    try {
+      set({ isLoading: true, error: null });
+      const updatedSession = await api.sessions.toggleComplete(id);
+      set((state) => ({
+        sessions: state.sessions.map((s) => (s.id === id ? updatedSession : s)),
+      }));
+    } catch (error) {
+      console.error('Failed to toggle session:', error);
+      set({ error: 'Failed to update study session' });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   // Workspace methods
@@ -235,73 +296,91 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     };
   },
 
-  loadWorkspace: (userId) => {
-    const key = getStorageKey(userId);
-    const stored = localStorage.getItem(key);
+  loadWorkspace: async (userId) => {
+    try {
+      set({ isLoading: true, error: null });
+      const workspace = await api.workspace.getAll();
 
-    if (stored) {
-      try {
-        const workspace: UserWorkspace = JSON.parse(stored);
-        // Convert date strings back to Date objects
-        workspace.semesters = workspace.semesters.map((s) => ({
+      // Convert date strings back to Date objects
+      const processedWorkspace = {
+        user: workspace.user,
+        semesters: workspace.semesters.map((s) => ({
           ...s,
           startDate: new Date(s.startDate),
           endDate: new Date(s.endDate),
-        }));
-        workspace.courses = workspace.courses.map((c) => ({
+        })),
+        courses: workspace.courses.map((c) => ({
           ...c,
           grades: c.grades.map((g) => ({
             ...g,
             date: new Date(g.date),
           })),
-        }));
-        workspace.sessions = workspace.sessions.map((s) => ({
+        })),
+        sessions: workspace.sessions.map((s) => ({
           ...s,
           date: new Date(s.date),
-        }));
-        set(workspace);
-      } catch (error) {
-        console.error('Failed to load workspace:', error);
-      }
-    } else {
-      // Create default workspace for new user
-      const user: User = {
-        id: userId,
-        email: userId,
-        name: 'Student',
-        gpaScale: 4.0,
+        })),
       };
-      const defaultWorkspace = createDefaultWorkspace(user);
-      set(defaultWorkspace);
-      get().saveWorkspace();
+
+      set(processedWorkspace);
+    } catch (error) {
+      console.error('Failed to load workspace:', error);
+      set({ error: 'Failed to load workspace' });
+      // Fallback to local storage if API fails
+      try {
+        const stored = localStorage.getItem(getStorageKey(userId));
+        if (stored) {
+          const workspace: UserWorkspace = JSON.parse(stored);
+          // Convert date strings back to Date objects
+          workspace.semesters = workspace.semesters.map((s) => ({
+            ...s,
+            startDate: new Date(s.startDate),
+            endDate: new Date(s.endDate),
+          }));
+          workspace.courses = workspace.courses.map((c) => ({
+            ...c,
+            grades: c.grades.map((g) => ({
+              ...g,
+              date: new Date(g.date),
+            })),
+          }));
+          workspace.sessions = workspace.sessions.map((s) => ({
+            ...s,
+            date: new Date(s.date),
+          }));
+          set(workspace);
+        }
+      } catch (localError) {
+        console.error('Failed to load from local storage:', localError);
+      }
+    } finally {
+      set({ isLoading: false });
     }
   },
 
-  saveWorkspace: () => {
-    const state = get();
-    if (!state.user) return;
-
-    const key = getStorageKey(state.user.id);
-    const workspace: UserWorkspace = {
-      user: state.user,
-      semesters: state.semesters,
-      courses: state.courses,
-      sessions: state.sessions,
-    };
-
+  saveWorkspace: async () => {
+    // Since we're using the database now, we don't need to save to local storage
+    // The data is automatically saved when we make API calls
+    // But we can keep this for offline fallback
     try {
-      localStorage.setItem(key, JSON.stringify(workspace));
+      const workspace = get().getCurrentWorkspace();
+      const userId = workspace.user?.id;
+      if (userId) {
+        localStorage.setItem(getStorageKey(userId), JSON.stringify(workspace));
+      }
     } catch (error) {
-      console.error('Failed to save workspace:', error);
+      console.error('Failed to save to local storage:', error);
     }
   },
 
   resetWorkspace: () => {
-    const user = get().user;
-    if (!user) return;
-
-    const defaultWorkspace = createDefaultWorkspace(user);
-    set(defaultWorkspace);
-    get().saveWorkspace();
+    set({
+      user: null as unknown as User,
+      semesters: [],
+      courses: [],
+      sessions: [],
+      isLoading: false,
+      error: null,
+    });
   },
 }));
