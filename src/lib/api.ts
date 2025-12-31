@@ -31,8 +31,8 @@ const clearToken = () => {
 /** =========================
  *  HTTP helpers
  *  ========================= */
-// IMPORTANT: keep this EMPTY so requests go to the same domain (Vercel) reliably.
-const API_BASE = "";
+// For local development, point to deployed backend. For production, keep empty.
+const API_BASE = import.meta.env.DEV ? "https://uniploit.ahmadsalama.com" : "";
 
 type JsonValue = any;
 
