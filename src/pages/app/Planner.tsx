@@ -38,8 +38,16 @@ export default function Planner() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const today = new Date();
+  const todaySessions = getSessionsForDay(today);
+  const completedToday = todaySessions.filter(s => s.completed).length;
+  const totalToday = todaySessions.length;
+  const hasStudiedToday = completedToday > 0;
+
+  const missedSessions = sessions.filter(s => {
+    const sessionDate = new Date(s.date);
+    return sessionDate < today && !s.completed;
+  }).length;
 
   const getSessionsForDay = (date: Date) => {
     return sessions.filter((s) => isSameDay(new Date(s.date), date));
@@ -172,7 +180,32 @@ export default function Planner() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              {hasStudiedToday ? (
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              ) : totalToday > 0 ? (
+                <Circle className="h-6 w-6 text-yellow-500" />
+              ) : (
+                <Circle className="h-6 w-6 text-muted-foreground" />
+              )}
+              <div>
+                <div className="text-2xl font-bold">
+                  {completedToday}/{totalToday}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {hasStudiedToday ? 'Completed' : totalToday > 0 ? 'In progress' : 'No sessions'}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Weekly Progress</CardTitle>
@@ -197,16 +230,12 @@ export default function Planner() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+            <CardTitle className="text-sm font-medium">Missed Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(
-                sessions
-                  .filter((s) => s.completed)
-                  .reduce((sum, s) => sum + s.duration, 0) / 60
-              ).toFixed(1)}
-              h
+            <div className="flex items-center gap-2">
+              <Clock className="h-6 w-6 text-red-500" />
+              <div className="text-2xl font-bold">{missedSessions}</div>
             </div>
           </CardContent>
         </Card>
@@ -266,6 +295,8 @@ export default function Planner() {
               {weekDays.map((day, index) => {
                 const daySessions = getSessionsForDay(day);
                 const isToday = isSameDay(day, new Date());
+                const isPast = day < new Date() && !isToday;
+                const hasUncompletedSessions = isPast && daySessions.some(s => !s.completed);
 
                 return (
                   <motion.div
@@ -274,7 +305,9 @@ export default function Planner() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     className={`p-3 rounded-lg border ${
-                      isToday ? 'bg-primary/5 border-primary' : 'bg-card'
+                      isToday ? 'bg-primary/5 border-primary' :
+                      hasUncompletedSessions ? 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800' :
+                      'bg-card'
                     }`}
                   >
                     <div className="text-center mb-2">
@@ -325,7 +358,10 @@ export default function Planner() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setEditingSessionId(session.id)}>
+                                <DropdownMenuItem onClick={() => {
+                                  setEditingSessionId(session.id);
+                                  setDialogOpen(true);
+                                }}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
@@ -410,7 +446,10 @@ export default function Planner() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingSessionId(session.id)}>
+                          <DropdownMenuItem onClick={() => {
+                            setEditingSessionId(session.id);
+                            setDialogOpen(true);
+                          }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>

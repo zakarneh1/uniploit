@@ -41,17 +41,23 @@ export function initializeGoogleAuth(onSuccess: (response: GoogleAuthResponse) =
 }
 
 /**
- * Trigger Google Sign-In popup
+ * Render Google Sign-In button
  */
-export function signInWithGoogle() {
+export function renderGoogleButton(elementId: string) {
   if (!GOOGLE_CLIENT_ID) {
-    throw new Error('Google authentication is not configured. Please contact support.');
+    console.warn('Google Client ID not configured');
+    return;
   }
 
   if (window.google && window.google.accounts) {
-    window.google.accounts.id.prompt();
-  } else {
-    throw new Error('Google Sign-In not initialized');
+    window.google.accounts.id.renderButton(
+      document.getElementById(elementId)!,
+      {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+      }
+    );
   }
 }
 
@@ -71,21 +77,6 @@ export function decodeGoogleCredential(credential: string): GoogleUserInfo {
   return JSON.parse(jsonPayload);
 }
 
-/**
- * Convert Google user info to app User
- */
-export function googleUserToAppUser(googleUser: GoogleUserInfo): Omit<User, 'id'> {
-  return {
-    name: googleUser.name,
-    email: googleUser.email,
-    university: '',
-    major: '',
-    graduationYear: new Date().getFullYear() + 4,
-    gpaScale: 4.0,
-    createdAt: new Date().toISOString(),
-  };
-}
-
 // Extend Window interface for TypeScript
 declare global {
   interface Window {
@@ -93,6 +84,7 @@ declare global {
       accounts: {
         id: {
           initialize: (config: { client_id: string; callback: (response: GoogleAuthResponse) => void }) => void;
+          renderButton: (element: HTMLElement, options: { theme?: string; size?: string; width?: string | number }) => void;
           prompt: () => void;
         };
       };
