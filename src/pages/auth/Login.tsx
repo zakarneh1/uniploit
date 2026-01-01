@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { initializeGoogleAuth, renderGoogleButton, GoogleAuthResponse } from '@/lib/googleAuth';
+import { initializeGoogleAuth, renderGoogleButton, decodeGoogleCredential, GoogleAuthResponse } from '@/lib/googleAuth';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
