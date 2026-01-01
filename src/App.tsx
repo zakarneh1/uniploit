@@ -4,7 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import { AppShell } from '@/components/layout/AppShell';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/auth/Login';
@@ -22,18 +23,38 @@ import NotFound from '@/pages/NotFound';
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, login } = useAuthStore();
   const { setPreviewMode, theme } = useUIStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setPreviewMode(!isAuthenticated);
   }, [isAuthenticated, setPreviewMode]);
 
+  // Check authentication on app load
+  useEffect(() => {
+    const checkAuth = async () => {
+      // If we have a stored user but no authentication, try to verify the token
+      if (user && !isAuthenticated) {
+        try {
+          const verifiedUser = await api.auth.me();
+          login(verifiedUser);
+        } catch (error) {
+          // Token is invalid, user needs to login again
+          console.log('Token expired or invalid, user needs to login again');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, [user, isAuthenticated, login]);
+
   // Apply theme on mount
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
-    
+
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
@@ -43,6 +64,14 @@ function AppRoutes() {
       root.classList.add(theme);
     }
   }, [theme]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <Routes>

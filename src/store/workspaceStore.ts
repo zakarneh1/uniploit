@@ -27,7 +27,7 @@ interface WorkspaceState extends UserWorkspace {
 
   // Session methods
   getSessions: () => StudySession[];
-  addSession: (session: StudySession) => void;
+  addSession: (session: Omit<StudySession, "id">) => void;
   updateSession: (id: string, updates: Partial<StudySession>) => void;
   deleteSession: (id: string) => void;
   toggleSessionComplete: (id: string) => void;

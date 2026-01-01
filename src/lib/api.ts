@@ -301,15 +301,8 @@ export const api = {
       });
     },
     toggleComplete: async (id: string): Promise<StudySession> => {
-      // First get the current session
-      const session = await requestJSON<StudySession>(`/api/sessions/${id}`, {
-        method: "GET",
-        auth: true,
-      });
-      // Then update it
-      const data = await requestJSON<StudySession>(`/api/sessions/${id}`, {
-        method: "PUT",
-        json: { completed: !session.completed },
+      const data = await requestJSON<StudySession>(`/api/sessions/${id}/toggle`, {
+        method: "POST",
         auth: true,
       });
       return data;

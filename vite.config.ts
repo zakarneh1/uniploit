@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
   ],
   server: {
     watch: { usePolling: true, interval: 800 /* 300~1500 */ },
+    historyApiFallback: true,
   },
   resolve: {
     alias: {

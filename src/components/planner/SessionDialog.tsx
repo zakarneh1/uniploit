@@ -104,13 +104,12 @@ export function SessionDialog({ open, onOpenChange, sessionId }: SessionDialogPr
       });
       toast.success('Session updated');
     } else {
-      const newSession: StudySession = {
-        id: crypto.randomUUID(),
+      const newSessionData = {
         ...data,
         completed: false,
         date: new Date(data.date),
       };
-      addSession(newSession);
+      addSession(newSessionData);
       toast.success('Session created');
     }
     onOpenChange(false);
