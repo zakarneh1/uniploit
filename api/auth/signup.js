@@ -19,14 +19,46 @@ export default async function handler(req, res) {
 
     // Handle Google OAuth signup
     if (oauthProvider === 'google' && oauthId) {
-      // Check if user already exists
+      // Check if user already exists with Google OAuth
+      const existingGoogleUser = await pool.query(
+        "SELECT * FROM users WHERE oauth_provider = $1 AND oauth_id = $2",
+        ['google', oauthId]
+      );
+
+      if (existingGoogleUser.rows.length > 0) {
+        return res.status(409).json({ error: "Google account already linked" });
+      }
+
+      // Check if user exists with same email (regular account)
       const existingUser = await pool.query(
         "SELECT * FROM users WHERE email = $1",
         [email.toLowerCase()]
       );
 
       if (existingUser.rows.length > 0) {
-        return res.status(409).json({ error: "Email already exists" });
+        // Link Google OAuth to existing account
+        const user = existingUser.rows[0];
+        await pool.query(
+          "UPDATE users SET oauth_provider = $1, oauth_id = $2, avatar_url = COALESCE($3, avatar_url) WHERE id = $4",
+          ['google', oauthId, avatarUrl, user.id]
+        );
+
+        const token = jwt.sign(
+          { userId: user.id },
+          process.env.JWT_SECRET,
+          { expiresIn: "7d" }
+        );
+
+        return res.status(200).json({
+          token,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            oauthProvider: 'google',
+            avatarUrl: avatarUrl || user.avatar_url
+          }
+        });
       }
 
       // Create new user with Google OAuth

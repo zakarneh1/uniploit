@@ -19,7 +19,7 @@ export default async function handler(req, res) {
 
     // Handle Google OAuth login
     if (oauthProvider === 'google' && oauthId) {
-      // Find or create user with Google OAuth
+      // Find existing user with Google OAuth
       let result = await pool.query(
         "SELECT * FROM users WHERE oauth_provider = $1 AND oauth_id = $2",
         ['google', oauthId]
@@ -27,14 +27,30 @@ export default async function handler(req, res) {
 
       let user;
       if (result.rows.length === 0) {
-        // Create new user with Google OAuth
-        const insertResult = await pool.query(
-          `INSERT INTO users (email, name, oauth_provider, oauth_id, avatar_url, password_hash)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING id, email, name, oauth_provider, oauth_id, avatar_url`,
-          [email.toLowerCase(), name, 'google', oauthId, avatarUrl, 'oauth-user']
+        // Check if user exists with same email (regular account)
+        const emailCheck = await pool.query(
+          "SELECT * FROM users WHERE email = $1",
+          [email.toLowerCase()]
         );
-        user = insertResult.rows[0];
+
+        if (emailCheck.rows.length > 0) {
+          // Link Google OAuth to existing account
+          const existingUser = emailCheck.rows[0];
+          await pool.query(
+            "UPDATE users SET oauth_provider = $1, oauth_id = $2, avatar_url = COALESCE($3, avatar_url) WHERE id = $4",
+            ['google', oauthId, avatarUrl, existingUser.id]
+          );
+          user = { ...existingUser, oauth_provider: 'google', oauth_id: oauthId, avatar_url: avatarUrl || existingUser.avatar_url };
+        } else {
+          // Create new user with Google OAuth
+          const insertResult = await pool.query(
+            `INSERT INTO users (email, name, oauth_provider, oauth_id, avatar_url, password_hash)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, email, name, oauth_provider, oauth_id, avatar_url`,
+            [email.toLowerCase(), name, 'google', oauthId, avatarUrl, 'oauth-user']
+          );
+          user = insertResult.rows[0];
+        }
       } else {
         user = result.rows[0];
         // Update user info if needed
