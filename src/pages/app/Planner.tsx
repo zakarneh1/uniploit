@@ -13,12 +13,20 @@ import {
   Flame,
   LayoutList,
   CalendarDays,
+  Edit,
+  MoreVertical,
 } from 'lucide-react';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useUIStore } from '@/store/uiStore';
 import { SessionDialog } from '@/components/planner/SessionDialog';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { motion } from 'framer-motion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Planner() {
   const sessions = useWorkspaceStore((state) => state.getSessions());
@@ -52,27 +60,43 @@ export default function Planner() {
 
   // Calculate streak
   const calculateStreak = () => {
-    const sortedSessions = [...sessions]
-      .filter((s) => s.completed)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const completedSessions = sessions.filter((s) => s.completed);
+    if (completedSessions.length === 0) return 0;
 
-    if (sortedSessions.length === 0) return 0;
+    // Get unique dates with completed sessions, sorted descending
+    const completedDates = [...new Set(
+      completedSessions.map(s => format(new Date(s.date), 'yyyy-MM-dd'))
+    )].sort().reverse();
+
+    if (completedDates.length === 0) return 0;
 
     let streak = 0;
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    for (const session of sortedSessions) {
-      const sessionDate = new Date(session.date);
-      sessionDate.setHours(0, 0, 0, 0);
+    // Check if today has a completed session
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const hasToday = completedDates.includes(todayStr);
 
-      const daysDiff = Math.floor(
-        (currentDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+    // If no session completed today, check if yesterday has one for current streak
+    if (!hasToday) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
+      if (!completedDates.includes(yesterdayStr)) {
+        return 0; // No recent completion
+      }
+    }
 
-      if (daysDiff === streak) {
+    // Count consecutive days backwards from today
+    for (let i = 0; ; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      const checkDateStr = format(checkDate, 'yyyy-MM-dd');
+
+      if (completedDates.includes(checkDateStr)) {
         streak++;
-      } else if (daysDiff > streak) {
+      } else {
         break;
       }
     }
@@ -263,29 +287,51 @@ export default function Planner() {
                       {daySessions.map((session) => {
                         const course = courses.find((c) => c.id === session.courseId);
                         return (
-                          <button
+                          <div
                             key={session.id}
-                            onClick={() => handleToggleComplete(session.id)}
-                            disabled={previewMode}
-                            className="w-full text-left p-2 rounded text-xs hover:bg-muted/50 transition-colors"
+                            className="flex items-center gap-2 p-2 rounded text-xs hover:bg-muted/50 transition-colors group"
                             style={{
                               backgroundColor: course?.color + '20',
                               borderLeft: `3px solid ${course?.color}`,
                             }}
                           >
-                            <div className="flex items-center gap-1 mb-1">
+                            <button
+                              onClick={() => handleToggleComplete(session.id)}
+                              disabled={previewMode}
+                              className="shrink-0"
+                            >
                               {session.completed ? (
                                 <CheckCircle2 className="h-3 w-3 text-green-600" />
                               ) : (
                                 <Circle className="h-3 w-3" />
                               )}
-                              <span className="font-medium truncate">{session.title}</span>
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{session.title}</div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {session.duration}m
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {session.duration}m
-                            </div>
-                          </button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  disabled={previewMode}
+                                >
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setEditingSessionId(session.id)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         );
                       })}
                     </div>
@@ -351,6 +397,25 @@ export default function Planner() {
                           </p>
                         )}
                       </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            disabled={previewMode}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingSessionId(session.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </CardContent>
                 </Card>
