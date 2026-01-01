@@ -38,30 +38,59 @@ export default function Planner() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
   const today = new Date();
+
+  const getSessionsForDay = (date: Date) => {
+    return sessions.filter((s) => {
+      try {
+        return isSameDay(new Date(s.date), date);
+      } catch (error) {
+        console.error('Error parsing session date:', s.date, error);
+        return false;
+      }
+    });
+  };
+
   const todaySessions = getSessionsForDay(today);
   const completedToday = todaySessions.filter(s => s.completed).length;
   const totalToday = todaySessions.length;
   const hasStudiedToday = completedToday > 0;
 
   const missedSessions = sessions.filter(s => {
-    const sessionDate = new Date(s.date);
-    return sessionDate < today && !s.completed;
+    try {
+      const sessionDate = new Date(s.date);
+      return sessionDate < today && !s.completed;
+    } catch (error) {
+      console.error('Error parsing session date for missed sessions:', s.date, error);
+      return false;
+    }
   }).length;
 
-  const getSessionsForDay = (date: Date) => {
-    return sessions.filter((s) => isSameDay(new Date(s.date), date));
-  };
-
   const completedThisWeek = sessions.filter(
-    (s) =>
-      s.completed &&
-      new Date(s.date) >= weekStart &&
-      new Date(s.date) < addDays(weekStart, 7)
+    (s) => {
+      try {
+        return s.completed &&
+          new Date(s.date) >= weekStart &&
+          new Date(s.date) < addDays(weekStart, 7);
+      } catch (error) {
+        console.error('Error parsing session date for week calculation:', s.date, error);
+        return false;
+      }
+    }
   ).length;
 
   const totalThisWeek = sessions.filter(
-    (s) => new Date(s.date) >= weekStart && new Date(s.date) < addDays(weekStart, 7)
+    (s) => {
+      try {
+        return new Date(s.date) >= weekStart && new Date(s.date) < addDays(weekStart, 7);
+      } catch (error) {
+        console.error('Error parsing session date for week calculation:', s.date, error);
+        return false;
+      }
+    }
   ).length;
 
   const weekProgress = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
@@ -299,11 +328,8 @@ export default function Planner() {
                 const hasUncompletedSessions = isPast && daySessions.some(s => !s.completed);
 
                 return (
-                  <motion.div
+                  <div
                     key={day.toISOString()}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
                     className={`p-3 rounded-lg border ${
                       isToday ? 'bg-primary/5 border-primary' :
                       hasUncompletedSessions ? 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800' :
@@ -324,8 +350,8 @@ export default function Planner() {
                             key={session.id}
                             className="flex items-center gap-2 p-2 rounded text-xs hover:bg-muted/50 transition-colors group"
                             style={{
-                              backgroundColor: course?.color + '20',
-                              borderLeft: `3px solid ${course?.color}`,
+                              backgroundColor: course?.color ? course.color + '20' : '#f3f4f6',
+                              borderLeft: `3px solid ${course?.color || '#d1d5db'}`,
                             }}
                           >
                             <button
@@ -340,10 +366,10 @@ export default function Planner() {
                               )}
                             </button>
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">{session.title}</div>
+                              <div className="font-medium truncate">{session.title || 'Untitled Session'}</div>
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                {session.duration}m
+                                {session.duration || 0}m
                               </div>
                             </div>
                             <DropdownMenu>
@@ -371,7 +397,7 @@ export default function Planner() {
                         );
                       })}
                     </div>
-                  </motion.div>
+                    </div>
                 );
               })}
             </div>
@@ -383,7 +409,14 @@ export default function Planner() {
       {viewMode === 'list' && (
         <div className="space-y-2">
           {sessions
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .sort((a, b) => {
+              try {
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+              } catch (error) {
+                console.error('Error sorting sessions:', a.date, b.date, error);
+                return 0;
+              }
+            })
             .map((session) => {
               const course = courses.find((c) => c.id === session.courseId);
               return (
@@ -420,11 +453,18 @@ export default function Planner() {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
-                            {format(new Date(session.date), 'MMM d, yyyy')}
+                            {(() => {
+                              try {
+                                return format(new Date(session.date), 'MMM d, yyyy');
+                              } catch (error) {
+                                console.error('Error formatting session date:', session.date, error);
+                                return 'Invalid Date';
+                              }
+                            })()}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {session.duration} minutes
+                            {session.duration || 0} minutes
                           </span>
                         </div>
                         {session.topic && (
