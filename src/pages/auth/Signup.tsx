@@ -301,11 +301,13 @@ export default function Signup() {
               <div className="text-white/80">Free Forever</div>
             </div>
           </div>
-          <img
-            src="/images/sign%20in%20page%20background.png"
-            alt="Student using UniPilot"
-            className="mt-8 rounded-xl shadow-2xl"
-          />
+          <div className="mt-8 overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-2xl">
+            <img
+              src="/images/sign%20in%20page%20background.png"
+              alt="Student using UniPilot"
+              className="h-72 w-full object-cover object-center"
+            />
+          </div>
         </motion.div>
       </div>
     </div>

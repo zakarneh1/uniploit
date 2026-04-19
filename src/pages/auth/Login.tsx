@@ -114,11 +114,13 @@ export default function Login() {
           <p className="text-lg text-white/90 mb-8">
             Continue tracking your academic progress and managing your study schedule.
           </p>
-          <img
-            src="/images/sign%20in%20page%20background.png"
-            alt="UniPilot Dashboard"
-            className="rounded-xl shadow-2xl"
-          />
+          <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-2xl">
+            <img
+              src="/images/sign%20in%20page%20background.png"
+              alt="UniPilot Dashboard"
+              className="h-80 w-full object-cover object-center"
+            />
+          </div>
         </motion.div>
       </div>
 
