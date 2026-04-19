@@ -301,6 +301,11 @@ export default function Signup() {
               <div className="text-white/80">Free Forever</div>
             </div>
           </div>
+          <img
+            src="/images/StudyPlanner.jpg"
+            alt="Student using UniPilot"
+            className="mt-8 rounded-xl shadow-2xl"
+          />
         </motion.div>
       </div>
     </div>

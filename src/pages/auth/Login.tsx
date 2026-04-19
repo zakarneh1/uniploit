@@ -115,7 +115,7 @@ export default function Login() {
             Continue tracking your academic progress and managing your study schedule.
           </p>
           <img
-            src="/images/Dashboard.jpg"
+            src="/images/StudyPlanner.jpg"
             alt="UniPilot Dashboard"
             className="rounded-xl shadow-2xl"
           />

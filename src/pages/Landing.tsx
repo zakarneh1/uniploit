@@ -77,7 +77,7 @@ export default function Landing() {
         <div
           className="absolute inset-0 -z-10 opacity-30"
           style={{
-            backgroundImage: 'url(/images/Dashboard.jpg)',
+            backgroundImage: 'url(/images/StudyPlanner.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
