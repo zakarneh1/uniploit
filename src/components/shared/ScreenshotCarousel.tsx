@@ -6,34 +6,14 @@ import { cn } from '@/lib/utils';
 
 const screenshots = [
   {
-    title: 'Dashboard',
-    description: 'Track your GPA and academic progress at a glance',
-    image: '/images/Dashboard.jpg',
+    title: 'Academic Workspace',
+    description: 'Stay focused with a clean, organized study overview',
+    image: '/images/landing%20page%20background.png',
   },
   {
-    title: 'Courses',
-    description: 'Manage all your courses and grades in one place',
-    image: '/images/Courses.jpg',
-  },
-  {
-    title: 'Course Details',
-    description: 'Deep dive into individual course performance',
-    image: '/images/CourseDetails.jpg',
-  },
-  {
-    title: 'Study Planner',
-    description: 'Organize your study sessions with visual calendar',
-    image: '/images/StudyPlanner.jpg',
-  },
-  {
-    title: 'Analytics',
-    description: 'Visualize your academic trends with detailed charts',
-    image: '/images/Analytics.jpg',
-  },
-  {
-    title: 'Settings',
-    description: 'Customize your experience and preferences',
-    image: '/images/Settings.jpg',
+    title: 'Sign In Experience',
+    description: 'A welcoming authentication flow built for students',
+    image: '/images/sign%20in%20page%20background.png',
   },
 ];
 

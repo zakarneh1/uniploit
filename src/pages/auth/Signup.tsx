@@ -302,7 +302,7 @@ export default function Signup() {
             </div>
           </div>
           <img
-            src="/images/StudyPlanner.jpg"
+            src="/images/sign%20in%20page%20background.png"
             alt="Student using UniPilot"
             className="mt-8 rounded-xl shadow-2xl"
           />

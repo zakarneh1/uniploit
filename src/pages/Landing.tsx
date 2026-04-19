@@ -77,7 +77,7 @@ export default function Landing() {
         <div
           className="absolute inset-0 -z-10 opacity-30"
           style={{
-            backgroundImage: 'url(/images/StudyPlanner.jpg)',
+            backgroundImage: 'url(/images/landing%20page%20background.png)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -192,7 +192,7 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 rounded-2xl blur-3xl" />
               <img
-                src="/images/Dashboard.jpg"
+                src="/images/landing%20page%20background.png"
                 alt="Student Success"
                 className="relative rounded-2xl shadow-2xl"
               />
