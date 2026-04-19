@@ -26,12 +26,16 @@ UniPilot is a full-stack academic planning web application for university studen
 
 ## Environment Variables
 
-Create a local `.env` file with the following keys:
+Create a local `.env` file with the required keys below.
+Do not commit real secrets to the repository.
 
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/database
-JWT_SECRET=replace_with_a_strong_random_secret
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
+DATABASE_URL=
+JWT_SECRET=
+VITE_GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+NEXTAUTH_URL=
+NEXTAUTH_SECRET=
 ```
 
 ## Getting Started
