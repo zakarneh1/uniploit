@@ -192,7 +192,7 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 rounded-2xl blur-3xl" />
               <img
-                src="/images/landing%20page%20background.png"
+                src="/images/langing%20page%20second%20picture.png"
                 alt="Student Success"
                 className="relative rounded-2xl shadow-2xl"
               />
