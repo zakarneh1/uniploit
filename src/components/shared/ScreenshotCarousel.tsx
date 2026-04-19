@@ -8,32 +8,32 @@ const screenshots = [
   {
     title: 'Dashboard',
     description: 'Track your GPA and academic progress at a glance',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/11a2c743-095d-4b8c-b6e4-9bfa213a4e62.png',
+    image: '/images/Dashboard.jpg',
   },
   {
     title: 'Courses',
     description: 'Manage all your courses and grades in one place',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/0cbd2332-8ebb-475d-b3cf-c86711a0abc0.png',
+    image: '/images/Courses.jpg',
   },
   {
     title: 'Course Details',
     description: 'Deep dive into individual course performance',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/059e4f67-b04d-4fd1-b307-502dcbfdc627.png',
+    image: '/images/CourseDetails.jpg',
   },
   {
     title: 'Study Planner',
     description: 'Organize your study sessions with visual calendar',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/480af878-bb05-41cf-8f6d-a068d0650caf.png',
+    image: '/images/StudyPlanner.jpg',
   },
   {
     title: 'Analytics',
     description: 'Visualize your academic trends with detailed charts',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/f60ec6bf-1d4c-41bb-ae1d-30fde2b04795.png',
+    image: '/images/Analytics.jpg',
   },
   {
     title: 'Settings',
     description: 'Customize your experience and preferences',
-    image: 'https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/4011f25f-1c86-48a2-87ba-5be85697633b.png',
+    image: '/images/Settings.jpg',
   },
 ];
 

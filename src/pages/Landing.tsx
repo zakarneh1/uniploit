@@ -77,7 +77,7 @@ export default function Landing() {
         <div
           className="absolute inset-0 -z-10 opacity-30"
           style={{
-            backgroundImage: 'url(https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/463ac521-a0ae-416a-81cc-a650dd2d18b0.png)',
+            backgroundImage: 'url(/images/Dashboard.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -192,7 +192,7 @@ export default function Landing() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 rounded-2xl blur-3xl" />
               <img
-                src="https://mgx-backend-cdn.metadl.com/generate/images/747203/2025-12-29/7c1c1003-3ae8-4cd6-84dc-69dbbbf2451a.png"
+                src="/images/Dashboard.jpg"
                 alt="Student Success"
                 className="relative rounded-2xl shadow-2xl"
               />

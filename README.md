@@ -1,68 +1,72 @@
-# Shadcn-UI Template Usage Instructions
+# UniPilot
 
-## technology stack
+UniPilot is a full-stack academic planning web application for university students. It helps users organize semesters, manage courses, track grades, and monitor GPA progress in one workspace.
 
-This project is built with:
+## Highlights
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Email and Google-based authentication
+- Semester and session planning
+- Course and grade tracking
+- GPA calculation and progress analytics
+- Responsive dashboard built with modern React patterns
 
-All shadcn/ui components have been downloaded under `@/components/ui`.
+## Tech Stack
 
-## File Structure
+- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- State + Data: Zustand, TanStack Query
+- Backend API: Node.js serverless functions in [api/](api/)
+- Database: PostgreSQL
 
-- `index.html` - HTML entry point
-- `vite.config.ts` - Vite configuration file
-- `tailwind.config.js` - Tailwind CSS configuration file
-- `package.json` - NPM dependencies and scripts
-- `src/app.tsx` - Root component of the project
-- `src/main.tsx` - Project entry point
-- `src/index.css` - Existing CSS configuration
-- `src/pages/Index.tsx` - Home page logic
+## Project Structure
 
-## Components
+- [src/](src/): React frontend
+- [api/](api/): serverless API handlers
+- [database_schema.sql](database_schema.sql): relational schema
+- [public/](public/): static assets
 
-- All shadcn/ui components are pre-downloaded and available at `@/components/ui`
+## Environment Variables
 
-## Styling
+Create a local `.env` file with the following keys:
 
-- Add global styles to `src/index.css` or create new CSS files as needed
-- Use Tailwind classes for styling components
-
-## Development
-
-- Import components from `@/components/ui` in your React components
-- Customize the UI by modifying the Tailwind configuration
-
-## Note
-
-- The `@/` path alias points to the `src/` directory
-- In your typescript code, don't re-export types that you're already importing
-
-# Commands
-
-**Install Dependencies**
-
-```shell
-pnpm i
+```env
+DATABASE_URL=postgresql://user:password@host:5432/database
+JWT_SECRET=replace_with_a_strong_random_secret
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-**Add Dependencies**
+## Getting Started
 
-```shell
-pnpm add some_new_dependency
-
-**Start Preview**
-
-```shell
+```bash
+pnpm install
 pnpm run dev
 ```
 
-**To build**
+The app will run on the local Vite development server.
 
-```shell
-pnpm run build
+## Available Scripts
+
+```bash
+pnpm run dev      # Start dev server
+pnpm run build    # Create production build
+pnpm run preview  # Preview production build locally
+pnpm run lint     # Run ESLint
 ```
+
+## Deployment Notes
+
+- Frontend build output is generated via Vite.
+- API routes are implemented under [api/](api/) and can be deployed to serverless platforms that support Node.js handlers.
+- Ensure production secrets are configured in your deployment environment.
+
+## Why This Project
+
+This project demonstrates practical full-stack engineering skills:
+
+- Designing and consuming REST-style APIs
+- Building maintainable React UI with reusable components
+- Managing state and async data flows in production-style code
+- Working with relational data models and authenticated user flows
+
+## License
+
+This repository is available for portfolio and evaluation purposes.
