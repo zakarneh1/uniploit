@@ -24,19 +24,7 @@ UniPilot is a full-stack academic planning web application for university studen
 - [database_schema.sql](database_schema.sql): relational schema
 - [public/](public/): static assets
 
-## Environment Variables
 
-Create a local `.env` file with the required keys below.
-Do not commit real secrets to the repository.
-
-```env
-DATABASE_URL=
-JWT_SECRET=
-VITE_GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-NEXTAUTH_URL=
-NEXTAUTH_SECRET=
-```
 
 ## Getting Started
 
