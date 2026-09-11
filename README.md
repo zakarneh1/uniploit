@@ -10,6 +10,8 @@ UniPilot is a full-stack academic planning web application for university studen
 - GPA calculation and progress analytics
 - Responsive dashboard built with modern React patterns
 
+Product process, roadmap, and backlog: see [docs/PRODUCT.md](docs/PRODUCT.md).
+
 ## Tech Stack
 
 - Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
